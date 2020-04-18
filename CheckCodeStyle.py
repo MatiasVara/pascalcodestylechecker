@@ -26,6 +26,9 @@ import os
 
 keywords = ["unit", "uses", "begin", "function", "procedure", "implementation", "type", "shl", "shr", "to", "until", "uses", "while", "false", "true", "else", "do", "and"]
 
+unary = ["+","-","*","shl","shr"]
+
+# TODO: refactor these functions
 
 def checkunitname(fileName):
     f = open (fileName, 'r')
@@ -68,10 +71,67 @@ def checkforkeywords(fileName):
         if re.search (r'\t', line):
             print(fileName + '(' + str(nrline) + ',' + str(1) + ')' + ' Note: tab found!')
         nrline += 1
-    f.close();
+    f.close()
+
+def checkunaryoperators(fileName):
+    f = open (fileName, 'r')
+    nrline = 1
+    while 1:
+        line = f.readline()
+        if not line : break
+        if isacomment (line.lstrip()):
+            nrline += 1
+            continue
+        for uny in unary:
+            result = line.find(uny)
+            if (result != -1) and (line[result-1] == ' ') or (line[result+1] == ' '):
+                print(fileName + '(' + str(nrline) + ','+ str(result) +')' + ' Note: unary operators do not need blanks between its operands')
+        nrline += 1
+    f.close()
+
+def checkequal(fileName):
+    f = open (fileName, 'r')
+    nrline = 1
+    while 1:
+        line = f.readline()
+        if not line : break
+        if isacomment (line.lstrip()):
+            nrline += 1
+            continue
+        result = line.find(':=')
+        if (result != -1):
+            if line[result - 1] != ' ' or line[result + 2] != ' ':
+                print(fileName + '(' + str(nrline) + ','+ str(result+1) +')' + ' Note: := must be surrounded by blanks')
+        nrline += 1
+    f.close()
+
+def checkcomablanks(fileName):
+    f = open (fileName, 'r')
+    nrline = 1
+    while 1:
+        line = f.readline()
+        if not line : break
+        if isacomment (line.lstrip()):
+            nrline += 1
+            continue
+        result = line.find(',')
+        if (result != -1):
+            if line[result + 1] != ' ':
+                print(fileName + '(' + str(nrline) + ','+ str(result+1) +')' + ' Note: blank missed after ,')
+        nrline += 1
+    f.close()
 
 # keywords must be in lowercase
-checkforkeywords(sys.argv[1]);
+checkforkeywords(sys.argv[1])
 
-# unit name must be the same than the filename
-checkunitname(sys.argv[1]);
+# unit name must be the same as the name used by the operating system's file system
+checkunitname(sys.argv[1])
+
+# blanks should not be used between a unary operator and its operand
+checkunaryoperators(sys.argv[1])
+
+# the ':=' operator must surrounded by blanks
+checkequal(sys.argv[1])
+
+## ',' must be followed by a blank
+checkcomablanks(sys.argv[1])
