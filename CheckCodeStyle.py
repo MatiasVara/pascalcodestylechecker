@@ -24,104 +24,97 @@ import sys
 import re
 import os
 
-keywords = ["unit", "uses", "begin", "function", "procedure", "implementation", "type", "shl", "shr", "to", "until", "uses", "while", "false", "true", "else", "do", "and"]
+keywords = ["unit", "uses", "begin", "Boolean", "function", "procedure", "implementation", "type", "shl", "shr", "to", "until", "uses", "while", "False", "True", "else", "do", "and"]
 
 unary = ["+","-","*","shl","shr"]
 
-# TODO: refactor these functions
-
 def checkunitname(fileName):
-    f = open (fileName, 'r')
-    fileonly = re.search(r"(.+?).pas", os.path.basename(fileName))
-    nrline = 1
-    while 1:
-        line = f.readline()
-        if not line : break
-        if isacomment (line.lstrip()):
+    with open(fileName, "r") as f:
+        fileonly = re.search(r"(.+?).pas", os.path.basename(fileName))
+        nrline = 1
+        while 1:
+            line = f.readline()
+            if not line : break
+            if isacomment (line.lstrip()):
+                nrline += 1
+                continue
+            s = re.search(r"(?<=unit\s)\w+", line)
+            if s:
+                if not s.group(0) in fileonly.group(1):
+                    print(fileName + '(' + str(nrline) + ',1)' + ' Note: Unit name and filename must be the same')
+                break
             nrline += 1
-            continue
-        s = re.search(r"(?<=unit\s)\w+", line)
-        if s:
-            if not s.group(0) in fileonly.group(1):
-                print(fileName + '(' + str(nrline) + ',1)' + ' Note: Unit name and filename must be the same')
-            break
-        nrline += 1
-    f.close();
 
 def isacomment(line):
     return line.startswith('//')
 
 def checkforkeywords(fileName):
-    f = open (fileName, 'r')
-    nrline = 1
-    while 1:
-        line = f.readline()
-        if not line: break
-        if isacomment(line.lstrip()):
+    with open(fileName, "r") as f:
+        nrline = 1
+        while 1:
+            line = f.readline()
+            if not line: break
+            if isacomment(line.lstrip()):
+                nrline += 1
+                continue
+            for keyw in keywords:
+                myregx = r"\s+" + keyw.upper() +r"\s" + r"|" + r"^" + keyw.upper() + r"\s"
+                if re.search(myregx, line.upper()):
+                    # TODO: to check all the occurrences
+                    if line.find(keyw) == -1:
+                        i = line.upper().find (keyw.upper())
+                        print(fileName + '(' + str(nrline) + ',' + str(i+1) + ')' + ' Note: the reserved word <' + keyw + '> must be in lower case')
+            # Tabs are not allowed
+            if re.search (r'\t', line):
+                print(fileName + '(' + str(nrline) + ',' + str(1) + ')' + ' Note: tab found!')
             nrline += 1
-            continue
-        for keyw in keywords:
-            myregx = r"\W*" + keyw.upper() +r"\W"
-            if re.search(myregx, line.upper()):
-                # TODO: to check all the ocurrences
-                if line.find(keyw) == -1:
-                    i = line.upper().find (keyw.upper())
-                    print(fileName + '(' + str(nrline) + ',' + str(i+1) + ')' + ' Note: the reserved word <' + keyw + '> must be in lower case')
-        # Tabs are not allowed
-        if re.search (r'\t', line):
-            print(fileName + '(' + str(nrline) + ',' + str(1) + ')' + ' Note: tab found!')
-        nrline += 1
-    f.close()
 
 def checkunaryoperators(fileName):
-    f = open (fileName, 'r')
-    nrline = 1
-    while 1:
-        line = f.readline()
-        if not line : break
-        if isacomment (line.lstrip()):
+    with open(fileName, "r") as f:
+        nrline = 1
+        while 1:
+            line = f.readline()
+            if not line : break
+            if isacomment (line.lstrip()):
+                nrline += 1
+                continue
+            for uny in unary:
+                result = line.find(uny)
+                if (result != -1) and (line[result-1] == ' ') or (line[result+1] == ' '):
+                    print(fileName + '(' + str(nrline) + ','+ str(result) +')' + ' Note: unary operators do not need blanks between its operands')
             nrline += 1
-            continue
-        for uny in unary:
-            result = line.find(uny)
-            if (result != -1) and (line[result-1] == ' ') or (line[result+1] == ' '):
-                print(fileName + '(' + str(nrline) + ','+ str(result) +')' + ' Note: unary operators do not need blanks between its operands')
-        nrline += 1
-    f.close()
 
 def checkequal(fileName):
-    f = open (fileName, 'r')
-    nrline = 1
-    while 1:
-        line = f.readline()
-        if not line : break
-        if isacomment (line.lstrip()):
+    with open(fileName, "r") as f:
+        nrline = 1
+        while 1:
+            line = f.readline()
+            if not line : break
+            if isacomment (line.lstrip()):
+                nrline += 1
+                continue
+            result = line.find(':=')
+            if (result != -1):
+                if line[result - 1] != ' ' or line[result + 2] != ' ':
+                    print(fileName + '(' + str(nrline) + ','+ str(result+1) +')' + ' Note: := must be surrounded by blanks')
             nrline += 1
-            continue
-        result = line.find(':=')
-        if (result != -1):
-            if line[result - 1] != ' ' or line[result + 2] != ' ':
-                print(fileName + '(' + str(nrline) + ','+ str(result+1) +')' + ' Note: := must be surrounded by blanks')
-        nrline += 1
-    f.close()
 
 def checkcomablanks(fileName):
-    f = open (fileName, 'r')
-    nrline = 1
-    while 1:
-        line = f.readline()
-        if not line : break
-        if isacomment (line.lstrip()):
+    with open(fileName, "r") as f:
+        nrline = 1
+        while 1:
+            line = f.readline()
+            if not line : break
+            if isacomment (line.lstrip()):
+                nrline += 1
+                continue
+            result = line.find(',')
+            if (result != -1):
+                if line[result + 1] != ' ':
+                    print(fileName + '(' + str(nrline) + ','+ str(result+1) +')' + ' Note: blank missed after ,')
             nrline += 1
-            continue
-        result = line.find(',')
-        if (result != -1):
-            if line[result + 1] != ' ':
-                print(fileName + '(' + str(nrline) + ','+ str(result+1) +')' + ' Note: blank missed after ,')
-        nrline += 1
-    f.close()
 
-# keywords must be in lowercase
+# TODO: keywords in strings should be ignored
 checkforkeywords(sys.argv[1])
 
 # unit name must be the same as the name used by the operating system's file system
@@ -135,3 +128,5 @@ checkequal(sys.argv[1])
 
 ## ',' must be followed by a blank
 checkcomablanks(sys.argv[1])
+
+## TODO: add a warning to detect "if%b(/W)%b"
