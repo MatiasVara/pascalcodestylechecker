@@ -63,7 +63,7 @@ def checkforkeywords(fileName):
                     # TODO: to check all the occurrences
                     if line.find(keyw) == -1:
                         i = line.upper().find (keyw.upper())
-                        print(fileName + '(' + str(nrline) + ',' + str(i+1) + ')' + ' Note: the reserved word <' + keyw + '> must be in lower case')
+                        print(fileName + '(' + str(nrline) + ',' + str(i+1) + ')' + ' Note: the reserved word <' + keyw + '> is not correct')
             # Tabs are not allowed
             if re.search (r'\t', line):
                 print(fileName + '(' + str(nrline) + ',' + str(1) + ')' + ' Note: tab found!')
